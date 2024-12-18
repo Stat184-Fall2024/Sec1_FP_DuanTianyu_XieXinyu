@@ -186,7 +186,7 @@ ggplot(data = clothing_data,
 ```
 
 Based on plot 2 the lack of a significant linear relationship between sales and age, with or without the use of discounts, has left us in a quandary, and we should conduct further exploratory analyses.
-  
+
 # Multiple Linear Regression Modeling Analysis
 
 Exploratory analysis can bring us more information that we should explore further, we can use multiple linear regression to find out what are the important factors that affect sales. The use of multiple linear regression not only clarifies the independent contributions of the data we want to explore, but also reveals the interactions between them, thus providing data to support the optimization of discounting strategies. With this approach we are able to make more accurate business decisions based on actual data and improve sales results.
@@ -215,9 +215,7 @@ plot(best_subset_cloth1,
 
 ```
 
-Best subset method Successfully screened out key variables affecting sales: 'summer season', 'rating scores', 'bi-weekly purchases' use of code' These variables have good explanatory power in the model for thestrong support for further modeling.  Although we can tell from Table 3 that none of the variables are significant except for summer, we can nevertheless compare the best variables except for summer. Our regression equation is as follows:
-  $$ \hat{Purchase Amount} = 57.995 -4.774 \times Summer + 1.0943 \times Rating + 1.0943 \times BuyBiWeekly -0.2955\times Code   $$
-  
+Best subset method Successfully screened out key variables affecting sales: 'summer season', 'rating scores', 'bi-weekly purchases' use of code' These variables have good explanatory power in the model for thestrong support for further modeling. Although we can tell from Table 3 that none of the variables are significant except for summer, we can nevertheless compare the best variables except for summer. Our regression equation is as follows: $$ \hat{Purchase Amount} = 57.995 -4.774 \times Summer + 1.0943 \times Rating + 1.0943 \times BuyBiWeekly -0.2955\times Code   $$
 
 ```{r}
 #| warning: false
@@ -248,14 +246,9 @@ kable(beta_pvalue_table,
       booktabs = TRUE)       
 ```
 
-
-
-  
-# Supporting data validation  
+# Supporting data validation
 
 To further investigate the impact of repeat purchases and discount usage on sales, we will utilize a second dataset for validation and comparison. This dataset provides an opportunity to analyze whether the patterns observed in the first dataset are consistent across environments or customer segments. By examining the relationship between repeat purchase frequency and discount usage and sales performance in the second dataset.This approach not only enhances the robustness of our conclusions, but also provides deeper insight into the drivers of sales and ensures that the trends observed are not specific to the dataset, but are indicators of broader consumer behavior.
-
-
 
 ```{r}
 #| warning: false
@@ -271,8 +264,11 @@ kable(head(Clothing, 5),
       align = "c")           # 居中对齐 
 
 ```
+
 ## Data Cleaning
+
 First of all we can observe based on Table 4 that we have variables that we don't need to ID as well as we should remove the extreme values before we proceed with the analysis we need to introduce a correlation matrix to help us understand whether the variables are independent from each other or not. Afterwards making a box plot to analyze if we card is an important variable.
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -309,7 +305,8 @@ ggplot(Clothing, aes(x = Card, y = Amount, fill = Card)) +
   theme_minimal() +
   scale_fill_manual(values = c("No Card" = "#F8766D", "Card" = "#00BFC4"))
 ```
-Based on Plot 3 we find that the variance of the use card is significantly and slightly larger than the No card, but we cannot tell if the means are the same.We decided to use ANOVA to determine this.  
+
+Based on Plot 3 we find that the variance of the use card is significantly and slightly larger than the No card, but we cannot tell if the means are the same.We decided to use ANOVA to determine this.\
 Based on Table 5, we can conclude that there is a difference in the mean value of sales with or without cards, albeit slightly violating the basic assumptions of the ANOVA, although this is not in our main considerations.
 
 ```{r}
@@ -348,17 +345,8 @@ kable(anova_table,
       booktabs = TRUE)       
 
 ```
-  
-The correlation coefficients of Amount with Dollar12 and Dollar24 are close to 0.9, indicating that the amount of money spent in the past 12 and 24 months has a significant effect on the amount of money spent currently.
-The positive correlation between Freq12 and Freq24 is high, reflecting the consistency in the number of purchases made in the past 12 and 24 months.
-From the scatter plot of Amount with other variables, it can be seen that Amount shows a strong positive correlation distribution with Dollar12 and Dollar24, which is consistent with the results of the correlation matrix in the first graph.
-In addition, the scatter plots of Freq12 and Freq24 are densely distributed, further indicating a strong correlation between the two.
 
-
-
-
-
-
+The correlation coefficients of Amount with Dollar12 and Dollar24 are close to 0.9, indicating that the amount of money spent in the past 12 and 24 months has a significant effect on the amount of money spent currently. The positive correlation between Freq12 and Freq24 is high, reflecting the consistency in the number of purchases made in the past 12 and 24 months. From the scatter plot of Amount with other variables, it can be seen that Amount shows a strong positive correlation distribution with Dollar12 and Dollar24, which is consistent with the results of the correlation matrix in the first graph. In addition, the scatter plots of Freq12 and Freq24 are densely distributed, further indicating a strong correlation between the two.
 
 ```{r}
 #| warning: false
@@ -386,13 +374,9 @@ kable(vif_table,
 
 ```
 
+We can find the VIF values of **Dollar12** and **Dollar24** in Table 6, and we usually think that there is some covariance if the VIF is greater than 5, so we should be careful to use these two variables for prediction.
 
-    
-We can find the VIF values of **Dollar12** and **Dollar24** in Table 6, and we usually think that there is some covariance if the VIF is greater than 5, so we should be careful to use these two variables for prediction.   
-   
-We try to process it to avoid multicollinearity by turning it into a variable.  
-
-
+We try to process it to avoid multicollinearity by turning it into a variable.
 
 ```{r}
 #| warning: false
@@ -422,6 +406,7 @@ kable(beta_p_table,
 ```
 
 We understand that the average spend comes from the fact that we decided not to introduce frequency and money to avoid multicollinearity, but we decided to introduce card because he is the highest influencing variable besides the two mentioned above.
+
 ```{r}
 #| warning: false
 #| echo: false
@@ -452,18 +437,18 @@ plot(model_Cloth_k, which = 1, main = "Residuals vs Fitted")
 # 生成 Q-Q 图
 plot(model_Cloth_k, which = 2, main = "Normal Q-Q Plot")
 ```
+
 Linearity: The fact that the reference line of the Residual vs fitted plot is approximate linear relationships distributed at both ends can be said not to violate the linear relationship.
-  
-Independence: Assuming what we have is a random sample of people it will be reasonable to assume errors are independent.  
-  
-Normality: The Q-Q plot shows that most points lie on the reference line, except for some deviations in the tails particularly at the upper right. This suggests that while the majority of the residuals follow a normal distribution, there may be some outliers or heavy-tailed behavior. The normality assumption is mostly satisfied.  
-  
+
+Independence: Assuming what we have is a random sample of people it will be reasonable to assume errors are independent.
+
+Normality: The Q-Q plot shows that most points lie on the reference line, except for some deviations in the tails particularly at the upper right. This suggests that while the majority of the residuals follow a normal distribution, there may be some outliers or heavy-tailed behavior. The normality assumption is mostly satisfied.
+
 Equal Variance: It appears that the variance is fanning out and there seems to be an increase in variance, perhaps there is a heteroskedasticity problem.
 
 This is one of the better predictive models although the card is not significant, but the adjusted R-squared is an impressive 0.9064.
 
-We can learn from Table 8 that Our model_2 is:
-  $$ \hat{Amount} = -39.6651 +1.4187 \times Avgspent12 + 1.0943 \times Card   $$
+We can learn from Table 8 that Our model_2 is: $$ \hat{Amount} = -39.6651 +1.4187 \times Avgspent12 + 1.0943 \times Card   $$
 
 ```{r}
 #| warning: false
@@ -478,16 +463,18 @@ ggplot(Clothing, aes(x = AvgSpent12, y = Amount, color = Card)) +
     y = "Sales Amount (USD)"
   ) +
   theme_minimal() +
-  scale_color_manual(values = c("No Card" = "red", "Card" = "blue"))
+  scale_color_manual(values = c("No Card" = "red", "Card" = "blue")) 
 
 ```
-According to the fitting diagram Plot 4. Customers who use cards contribute more to sales and have higher average spending.Customers who do not use their cards have a smaller increase in sales, even if they have higher average expenditures.But average spend is clearly an excellent predictor variable anyway.  
 
-# Discussions 
+According to the fitting diagram Plot 4. Customers who use cards contribute more to sales and have higher average spending.Customers who do not use their cards have a smaller increase in sales, even if they have higher average expenditures.But average spend is clearly an excellent predictor variable anyway.
+
+# Discussions
 
 The results of this study show that there is a positive correlation between “Repeat Purchase Behavior” and “Average Spending” and sales, which not only reflects the value of loyal customers, but also the “Loyalty Incentive” behind the data “ mechanism. Similar to credit cards that incentivize spending through points and cashback, Code's negative coefficient reveals a negative correlation between promo code users and spending power. We hypothesize that this contrasts with the high spending power exhibited by credit card users (Code) becoming a mapping of the lower spending power customer segment, while (Card) reflects the characteristics of the high spending power customer segment. The effect of this loyalty incentive comes from customers' continued spending habits and trust in the brand. Enterprises can identify these customers as high-value customers and further increase their consumption frequency and single-use spending through precision marketing and personalized offer strategies. In addition, by combining payment methods such as credit cards issued by the company itself with loyalty incentives, a multi-level customer retention system can be formed to promote sustained sales growth.
 
 # Conclusion
+
 By analyzing the two datasets, we can draw the following conclusions:
 
 In the first dataset, season is an important factor affecting sales, there is a significant difference between different seasons on sales performance, in the summer people are more reluctant to buy which is the off-season, you can reduce investment at this time.Repeat purchase has a significant positive effect on sales, indicating that the consumption behavior of loyal customers contributes more to sales.
@@ -495,11 +482,6 @@ In the first dataset, season is an important factor affecting sales, there is a 
 The second dataset, there is an interaction between repeat purchase and amount spent, further confirming the importance of repeat purchase behavior.Repeat purchase behavior, as a core variable, has a stable and positive impact on sales increase.
 
 Enterprises can combine seasonal promotion strategies, loyal customer maintenance, and credit card incentives to accurately increase the frequency of customer purchases and average expenditures to achieve sales growth.
-
-
-
-
-
 
 ```{r codeAppend, ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
 ```
