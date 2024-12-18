@@ -1,0 +1,433 @@
+---
+title: "Exploring Factors Affecting Clothes Sales"
+subtitle: "Final Project--Group 8 XinyuXie TianyuDuan"
+format: pdf
+editor: visual
+---
+
+```{=html}
+<style>
+h1.title, h2.subtitle {
+    text-align: center;
+}
+</style>
+```
+
+<br> Online shopping has become a major channel for selling clothing items. It is becoming increasingly important to help merchants as well as designers to understand what factors influence the main factors of affordable clothing.The purpose of this project is to analyze the consumption trends of clothing and identify the main factors that influence customer purchasing behavior or purchasing preferences. By utilizing all the explored data sets, this study will investigate the relationship between customer age, merchant discounts, and the amount of money spent by the purchasing customer, providing businesses and beneficiaries with better pricing and customer attraction strategies.
+
+# Data Description
+
+### Primary Dataset: Kaggle – Customer Shopping Trends
+
+URL:***https://www.kaggle.com/datasets/bhadramohit/customer-shopping-latest-trends-dataset***
+
+Content: The dataset offers a comprehensive view of consumer shopping trends, aiming to uncover patterns and behaviors in retail purchasing. It contains detailed transactional data across various product categories, customer demographics, and purchase channels.The following data are included:
+
+**Transaction Details**: Purchase date, transaction value, product category, and payment method.
+
+**Customer Information**: Age group, gender, location, and loyalty status.
+
+**Shopping Behavior**: Frequency of purchases, average spend per transaction, and seasonal trends.
+
+### Secondary Dataset: library(Stat2Data) Data(Clothing)
+
+Provides additional data to backup the findings of the primary dataset.
+
+Content: This dataset represents a random sample of 60 customers from a large clothing retailer. Data on 60 customers at a clothing retailer. The following data are included:
+
+**ID** Case ID\
+**Amount** Net dollar amount spent by customers in their latest purchase from this retailer\
+**Recency** Number of months since the last purchase\
+**Freq12** Number of purchases in the last 12 months\
+**Dollar12** Dollar amount of purchases in the last 12 months\
+**Freq24** Number of purchases in the last 24 months\
+**Dollar24** Dollar amount of purchases in the last 24 months\
+**Card** 1 for customers who have a private-label credit card with the retailer, 0 if not
+
+# Data Cleaning
+
+First we check the our main dataset, and we are lucky that it is a tidy data. Our plan for data processing is to first filter out the useful variables, and then to analyze the consumption for the type of clothes.The customer number has no real meaning, in fact we want to analyze the consumption behavior, not the product or the consumption process. So we can drop the following variables "CustomerID, Size, Color, Payment Method, Shipping Type, Preferred Payment Method".Let's look at the remaining variables in table 1.
+
+```{r}
+#| warning: false
+#| echo: false
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(corrplot)
+library(Stat2Data)
+library(GGally)
+library(broom) 
+library(leaps)
+
+#Loading data
+Shopping_trends <- read.csv("Shopping_trends.csv")
+
+
+# 删除这些列
+clothing_data <- Shopping_trends %>%
+  select(
+    -`Customer.ID`,
+    -Size,
+    -Color,
+    -`Payment.Method`,
+    -`Shipping.Type`,
+    -`Preferred.Payment.Method`,
+    -`Item.Purchased`,
+    -Location
+  ) %>%
+  filter(Category == "Clothing")
+
+
+#View(clothing_data)
+# 获取变量名
+variable_names1 <- data.frame(Variable = colnames(clothing_data))
+
+# 使用 kable 显示表格
+kable(variable_names1, col.names = c("Variable Name"), caption = "Retained Variables in clothing_data")
+
+
+
+
+```
+
+# Descriptive Statistics
+
+We first need to look at our sample, our case is every customer who has ever spent money, they are important for us to analyze.We first want our sample to be representative of the majority of the consumer population, which we can see well using the variable age, so we will analyze age first. The average spend is used to look at the average unit price and the average rating and standard deviation are used to see if the product has a consistent level of satisfaction among the population.
+
+```{r}
+#| warning: false
+#| echo: false
+
+#Give descriptive statistics
+summary_stats <- clothing_data %>%
+  summarise(
+    total_customers = n(),                          # Total customers
+    avg_age = mean(Age, na.rm = TRUE),              # Average age
+    median_age = median(Age, na.rm = TRUE),         # Median age
+    avg_purchase = mean(Purchase.Amount..USD., na.rm = TRUE),   # Average purchase amount
+    avg_rating = mean(Review.Rating, na.rm = TRUE), # Average rating
+    sd_rating = sd(Review.Rating, na.rm = TRUE)     # standard deviation of ratings
+  )
+# Provide new readable listings
+colnames(summary_stats) <- c(
+  "Total Customers",      
+  "Average Age",          
+  "Median Age",           
+  "Average Purchase ($)", 
+  "Average Rating",       
+  "Rating Std Dev"        
+)
+
+# Displaying tables with kable
+kable(summary_stats, caption = "Summary Statistics for Clothing Data") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = FALSE,
+    position = "center",
+    font_size = 8
+  ) %>%
+  row_spec(0, bold = TRUE, background = "gray")  
+
+```
+
+```{r}
+#| warning: false
+#| echo: false
+age_counts <- clothing_data %>%
+  group_by(Age) %>%
+  summarise(count = n()) %>%
+  ungroup()
+
+# Plotting scatterplots on age
+ggplot(age_counts, aes(x = Age, y = count)) +
+  geom_point(color = "blue", size = 3) +
+   geom_smooth(method = "lm", color = "red", se = TRUE) + # Add linear fit line with confidence intervals
+  
+  # Add title and tags
+  labs(
+    title = "Table3. Distribution of Customer Age Frequency",
+    subtitle = "Analyzing the frequency of different age groups",
+    x = "Age of Customers",
+    y = "Number of Customers",
+    caption = "Source: Clothing main Data"
+  ) 
+
+
+
+
+```
+
+According to Table 2, the data contains 1737 customers, the sample size is large enough for statistical analysis and the results are representative.The average age is 43.78 years old, and the median is 43 years old, which means the age distribution is more symmetrical.The average purchase amount is \$60.03, which indicates a stable level of single purchase.According to Tables 2 and 3, we can conclude that the number of customers is evenly distributed across all age groups, with no upward or downward trend with age.The correlation between the independent variable and the dependent variable is very weak and may be close to 0. This represents that customers regardless of age groups show similar interest in purchasing clothes online, which is in line with what we know about the context that e-commerce is an important clothing sales channel nowadays.And our sample is representative.We are confident to proceed to the next step of the analysis.
+
+Next we argue that discounts are an important variable that affects sales，Because in the past there was the idea that discounts would encourage people to spend more, and we can take whether or not we use discounts and analyze the impact on sales.
+
+```{r}
+#| warning: false
+#| echo: false
+# Relationship between the use of discounts and sales
+ggplot(data = clothing_data, 
+       aes(x = Age, y = Purchase.Amount..USD., color = Discount.Applied)) +
+  geom_point(alpha = 0.6, size = 1) +           
+  geom_smooth(method = "lm", color = "red") +      # Add a linear regression fit line
+  labs(
+    title = "Table#. Sales Amount vs Age by Discount Status",
+    x = "Age of Customers",
+    y = "Sales Amount (USD)",
+    color = "Discount Applied"
+  ) +
+  facet_grid(~ Discount.Applied) +                 # Sectionalized charts, grouped by discount status
+  theme_minimal(base_size = 14) +                  
+  theme(
+    plot.title = element_text(face = "bold", size = 16, hjust = 0.5),
+    axis.title = element_text(face = "bold", size = 12),
+    legend.position = "bottom"
+  )
+```
+
+aiojdioajwdij The lack of a significant linear relationship between sales and age, with or without the use of discounts, has left us in a quandary, and we should conduct further exploratory analyses.
+  
+# Multiple Linear Regression Modeling Analysis
+
+Exploratory analysis can bring us more information that we should explore further, we can use multiple linear regression to find out what are the important factors that affect sales.The use of multiple linear regression not only clarifies the independent contributions of the data we want to explore, but also reveals the interactions between them, thus providing data to support the optimization of discounting strategies.With this approach we are able to make more accurate business decisions based on actual data and improve sales results.
+
+```{r}
+#| warning: false
+#| echo: false
+
+
+# Elimination of the single level variable 'Category'
+clothing_data_clean <- clothing_data[, !(names(clothing_data) %in% "Category")]
+
+# Implementation of the optimal subset method
+best_subset_cloth1 <- regsubsets(Purchase.Amount..USD. ~ ., data = clothing_data_clean, nvmax = ncol(clothing_data_clean) - 1)
+
+# View Summary of Results
+best_summary <- summary(best_subset_cloth1)
+
+
+# Visualization results
+
+plot(best_subset_cloth1, 
+     scale = "adjr2", 
+     main = "Best Subset Selection by Adjusted R²"
+     )
+
+```
+
+Best subset method Successfully screened out key variables affecting sales: 'summer season', 'rating scores', 'bi-weekly purchases' use of code' These variables have good explanatory power in the model for thestrong support for further modeling.  
+  modle=
+  
+
+```{r}
+#| warning: false
+#| echo: false
+
+#拟合最终模型
+model1_1 <- lm(Purchase.Amount..USD. ~ Review.Rating + Season + Review.Rating + Frequency.of.Purchases + Promo.Code.Used
+ , data = clothing_data)
+
+#拟合模型
+model1_1 <- lm(Purchase.Amount..USD. ~ Review.Rating + Season + Frequency.of.Purchases + Promo.Code.Used, 
+               data = clothing_data)
+
+#提取模型结果（Beta系数和p值）
+model_results <- tidy(model1_1)  # 使用 broom 包的 tidy() 提取模型结果
+
+#筛选需要的列：变量名、Beta系数和p值
+beta_pvalue_table <- model_results[, c("term", "estimate", "p.value")]
+
+#重命名为易读格式
+colnames(beta_pvalue_table) <- c("Variable", "Beta Coefficient", "P-value")
+
+#使用 knitr::kable 创建表格
+kable(beta_pvalue_table, 
+      format = "latex",      
+      caption = "Regression Coefficients and P-values",
+      digits = 4,            # 小数点后保留4位
+      booktabs = TRUE)       # 美化表格，适用于 LaTeX
+```
+
+
+
+  
+# Supporting data validation  
+
+To further investigate the impact of repeat purchases and discount usage on sales, we will utilize a second dataset for validation and comparison.This dataset provides an opportunity to analyze whether the patterns observed in the first dataset are consistent across environments or customer segments.By examining the relationship between repeat purchase frequency and discount usage and sales performance in the second dataset.This approach not only enhances the robustness of our conclusions, but also provides deeper insight into the drivers of sales and ensures that the trends observed are not specific to the dataset, but are indicators of broader consumer behavior.
+
+
+
+```{r}
+#| warning: false
+#| echo: false
+#(a)
+if (!require(Stat2Data)) install.packages("Stat2Data")
+library(Stat2Data)
+data("Clothing")
+kable(head(Clothing, 5), 
+      format = "latex",      # 适合 PDF 输出的 LaTeX 格式
+      caption = "First 5 Rows of Clothing Data", 
+      booktabs = TRUE,       # 使用 LaTeX 美观表格线条
+      align = "c")           # 居中对齐 
+
+```
+
+
+```{r}
+#| warning: false
+#| echo: false
+# 数据预处理
+Clothing <- subset(Clothing, select = -ID)                # 去掉 ID 列
+Clothing <- subset(Clothing, Amount != 1506000)          # 去掉异常值
+Clothing <- subset(Clothing, Freq12 > 0)  # Remove records with Freq12 of 0
+Clothing$Card <- factor(Clothing$Card, levels = c(0, 1), labels = c("No Card", "Card"))  # 因子化
+
+# 1. 分离数值型和分类型变量
+numeric_clothing <- Clothing[, sapply(Clothing, is.numeric)]   # 数值型变量
+factor_clothing <- Clothing[, sapply(Clothing, is.factor)]     # 分类型变量
+
+# 2. 计算数值型变量的相关矩阵
+library(corrplot)
+cor_matrix <- cor(numeric_clothing, method = "pearson")
+
+# 绘制相关矩阵
+corrplot(cor_matrix, method = "number", tl.cex = 0.8)
+
+# 3. 绘制数值型变量的散点图矩阵
+pairs(numeric_clothing, main = "Scatterplot Matrix of Numerical Variables")
+
+# 4. 分类变量与数值变量的关系：箱线图（Card 对 Amount 的影响）
+library(ggplot2)
+ggplot(Clothing, aes(x = Card, y = Amount, fill = Card)) +
+  geom_boxplot() +
+  labs(
+    title = "Sales Amount by Card Usage",
+    x = "Card Usage",
+    y = "Sales Amount (USD)"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("No Card" = "#F8766D", "Card" = "#00BFC4"))
+
+# 5. 分组统计：Card 对数值变量的影响
+library(dplyr)
+group_stats <- Clothing %>%
+  group_by(Card) %>%
+  summarise(
+    Mean_Amount = mean(Amount, na.rm = TRUE),
+    SD_Amount = sd(Amount, na.rm = TRUE),
+    Mean_Freq12 = mean(Freq12, na.rm = TRUE),
+    Mean_Freq24 = mean(Freq24, na.rm = TRUE)
+  )
+
+print("Grouped Summary Statistics for Card:")
+print(group_stats)
+
+# 6. ANOVA 方差分析：检验 Card 对 Amount 的显著性影响
+anova_result <- aov(Amount ~ Card, data = Clothing)
+summary(anova_result)
+
+```
+
+```{r}
+#| warning: false
+#| echo: false
+
+#(d)
+
+#The correlation coefficients of Amount with Dollar12 and Dollar24 are close to 0.9, indicating that the amount of money spent in the last 12 and 24 months has a large impact on the amount of money spent currently.Freq12 has a high positive correlation with Freq24 because of the consistency in the number of purchases made in the last 12 and 24 months.Dollar12 and Dollar24 have a high positive correlation with each other. Dollar12 and Dollar24 have a correlation coefficient of almost 1, which may lead to multicollinearity problems.
+
+
+
+#From the scatterplot of Amount with the other variables, it can be observed that there is a strong positive correlation distribution with Dollar12 and Dollar24, which is consistent with the results of the correlation matrix in the first graph.The scatterplot of Freq12 and Freq24 shows a denser distribution, indicating a strong correlation between the two.
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#(e)
+library(car)
+
+model_all <- lm(Amount ~ ., data = Clothing) 
+vif_values <- vif(model_all)  
+print(vif_values) 
+# VIF < 5 :Recency Freq12 Freq24  Card.This indicates that the covariance with other variables is weak and can be retained.
+
+# VIF > 10 : Dollar12 Dollar24 Very high VIF values indicate the presence of severe covariance.
+```
+
+
+
+
+
+```{r}
+#| warning: false
+#| echo: false
+#(j)
+Clothing$AvgSpent12 <- Clothing$Dollar12 / Clothing$Freq12
+
+library(leaps)
+best_subset_Cloth <- regsubsets(Amount ~ ., data = Clothing)
+plot(best_subset_Cloth)
+
+best_subset_Cloth_lm <- lm(Amount ~ Card + Dollar24 + Freq24, data = Clothing)
+summary(best_subset_Cloth_lm)
+#The BIC and the best subset get same model hat(Amount) =-31030.920 -54892.579(Card) +197.517(Dollar24) -9982.845(Freq24)  
+# There are now 52 case in it.
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#(k)
+model_Cloth_k <- lm(Amount ~ AvgSpent12 + Card, data = Clothing)
+summary(model_Cloth_k)
+
+#Linearity:The fact that the reference line of the Residual vs fitted plot is approximate linear relationships distributed at both ends can be said not to violate the linear relationship
+
+#Independence:Assuming what we have is a random sample of people it will be reasonable to assume errors are independent.
+
+#Normality:The Q-Q plot shows that most points lie on the reference line, except for some deviations in the tails particularly at the upper right. This suggests that while the majority of the residuals follow a normal distribution, there may be some outliers or heavy-tailed behavior. The normality assumption is mostly satisfied.
+
+#Equal Variance:It appears that the variance is fanning out and there seems to be an increase in variance, perhaps there is a heteroskedasticity problem
+cooks_model_k <- cooks.distance(model_Cloth_k)
+# point 59 looks like an unusual point because Cook is greater than one.
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#(l)
+model_M1 <- lm(log(Amount) ~ log(AvgSpent12) + Card, data = Clothing)
+summary(model_M1)
+
+
+#Linearity:The residuals are fairly evenly distributed around the horizontal line at zero, indicating that the logarithmic transformation improves the model's linearity assumption.
+
+#Independence:Assuming what we have is a random sample of people it will be reasonable to assume errors are independent.
+
+#Normality:In QQ plot most points are on the line of fit, consistent with normality
+
+#Equal Variance:The logarithmic transformation applied to Amount and AvgSpent12 seems to stabilize the variance, with the residuals more evenly distributed around zero across the different fitted values. This suggests an improvement in homoscedasticity, as the residuals no longer show significant scalloping or widening as the fitted values increase.
+cooks_model_m <- cooks.distance(model_M1)
+
+# It's not obvious unusual points for M
+
+```
+
+```{r}
+#| warning: false
+#| echo: false
+#(m)
+summary(model_M1)
+
+#M: hat(log(Amount))=-0.64269 + 1.12781(log(AvgSpent12)) +0.08471(Card)
+#Can be converted to: hat(Amount)=e^(-0.64269) * (AvgSpent12)^(1.12781) * (e)^(0.08471(card))
+
+#The predictor variable Card has a p-value of 0.2394 which is above the common significance level of 0.05. This suggests that Card may not be a significant predictor of log(Amount) in this model.Can be drop.
+```
+
+
+
+```{r codeAppend, ref.label=knitr::all_labels(), echo=TRUE, eval=FALSE}
+```
