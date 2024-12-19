@@ -257,7 +257,9 @@ plot(best_subset_cloth1,
      )
 ```
 
-Best subset method Successfully screened out key variables affecting sales: 'summer season', 'rating scores', 'bi-weekly purchases' use of code' These variables have good explanatory power in the model for thestrong support for further modeling. Although we can tell from Table 3 that none of the variables are significant except for summer, we can nevertheless compare the best variables except for summer. Our regression equation is as follows: $$ \hat{Purchase Amount} = 57.995 -4.774 \times Summer + 1.0943 \times Rating + 1.0943 \times BuyBiWeekly -0.2955\times Code   $$
+Best subset method Successfully screened out key variables affecting sales: 'summer season', 'rating scores', 'bi-weekly purchases' use of code' These variables have good explanatory power in the model for the strong support for further modeling. Although we can tell from Table 3 that none of the variables are significant except for summer, we can nevertheless compare the best variables except for summer. Our regression equation is as follows: $$ \hat{Purchase Amount} = 57.995 -4.774 \times Summer + 1.0943 \times Rating + 1.0943 \times BuyBiWeekly -0.2955\times Code   $$
+
+\newpage
 
 \newpage
 
